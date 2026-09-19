@@ -4,7 +4,7 @@ import Intro from './Intro'
 import { STAGE_H, STAGE_W } from './stage'
 import { useSiteAudio } from './useSiteAudio'
 
-const WHITELIST_URL = '#'
+const WHITELIST_URL = 'https://x.com/KingAnt'
 
 const CAR_STILL = '/antCar-still.png'
 const CAR_GIF = '/antCar-transparent.gif'
@@ -41,6 +41,8 @@ function King() {
       <a
         className="hit"
         href={WHITELIST_URL}
+        target="_blank"
+        rel="noreferrer"
         aria-label="Apply for whitelist here"
         style={{ clipPath: `polygon(${KING_HIT})` }}
       />
