@@ -1,0 +1,39 @@
+/* Yellow mute button, fixed to the top-right of the viewport. */
+.mute-btn {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: #f3c10e;
+  color: #111;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease;
+}
+
+.mute-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.mute-btn:hover {
+  background: #ffd21f;
+  transform: scale(1.06);
+}
+
+.mute-btn:active {
+  transform: scale(0.96);
+}
+
+.mute-btn:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}

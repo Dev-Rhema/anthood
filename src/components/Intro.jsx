@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { STAGE_W } from './stage'
+import posterSrc from '../assets/media/garagedoor-poster.webp'
+import videoSrc from '../assets/media/garagedoor.mp4'
+import { STAGE_W } from '../stage'
+import './Intro.css'
 
 const VIDEO_W = 1280
 // Where the video's frame lands on the page's design canvas, measured by matching the video's
@@ -118,7 +121,8 @@ export default function Intro({ sceneRef, onStart, onDone, onFail }) {
     onDone()
   }
 
-  const setMuted = (el) => {
+  // The video is permanently silent, whatever the site's mute button says.
+  const silence = (el) => {
     if (!el) return
     el.muted = true
     el.defaultMuted = true
@@ -130,16 +134,15 @@ export default function Intro({ sceneRef, onStart, onDone, onFail }) {
         <video
           ref={(el) => {
             videoRef.current = el
-            setMuted(el)
+            silence(el)
           }}
           className="intro-video"
-          src="/garagedoor.mp4"
-          poster="/garagedoor-poster.jpg"
+          src={videoSrc}
+          poster={posterSrc}
           muted
           playsInline
           preload="auto"
-          // The video is permanently silent, whatever the site's mute button says.
-          onVolumeChange={(e) => setMuted(e.currentTarget)}
+          onVolumeChange={(e) => silence(e.currentTarget)}
           onEnded={() => transition().catch(onDone)}
           onError={onFail}
         />

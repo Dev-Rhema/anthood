@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Original/source artwork kept locally, not deployed or committed
+source-assets

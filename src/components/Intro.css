@@ -1,0 +1,80 @@
+/* Garage door intro: full-screen video with a "click here" poster on the door. */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+}
+
+/* Wall-coloured backdrop so any letterboxing blends into the video; scales/fades with it. */
+.intro-stage {
+  position: absolute;
+  inset: 0;
+  background: #848e8e;
+}
+
+/* Fill the screen on landscape displays, fit the whole frame otherwise. */
+.intro-video {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  display: block;
+  width: min(100vw, calc(100dvh * 16 / 9));
+  max-width: none;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  pointer-events: none;
+}
+
+@media (min-aspect-ratio: 6/5) {
+  .intro-video {
+    width: max(100vw, calc(100dvh * 16 / 9));
+  }
+}
+
+.intro-poster {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  padding: 0.35em 0.7em 0.3em;
+  border: 0.09em solid #111;
+  border-radius: 0.12em;
+  background: #f3c10e;
+  color: #111;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: clamp(30px, 4.4vw, 68px);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow:
+    0 0 0 0.07em #f3c10e,
+    0 0.35em 0.7em rgb(0 0 0 / 0.45);
+  animation: poster-pulse 1.8s ease-in-out infinite;
+  transition: opacity 250ms ease;
+}
+
+.intro-poster:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 6px;
+}
+
+.intro[data-started] .intro-poster {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes poster-pulse {
+  50% {
+    scale: 1.05;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-poster {
+    animation: none;
+  }
+}

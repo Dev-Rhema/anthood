@@ -1,0 +1,41 @@
+/*
+ * Hover outline: a pre-rendered silhouette ring, tinted here and drawn behind the art.
+ * It starts slightly shrunk (hidden behind the artwork) and grows out to full size.
+ */
+.king {
+  --outline-color: #fff;
+}
+
+.king .hit {
+  outline: none;
+}
+
+.king img {
+  position: relative; /* paint above the outline */
+}
+
+.king .outline {
+  position: absolute;
+  background: var(--outline-color);
+  -webkit-mask: url('../assets/images/king-outline.png') center / 100% 100% no-repeat;
+  mask: url('../assets/images/king-outline.png') center / 100% 100% no-repeat;
+  opacity: 0;
+  transform: scale(0.97);
+  transition:
+    opacity 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  pointer-events: none;
+}
+
+.king:has(.hit:hover) .outline,
+.king:has(.hit:focus-visible) .outline {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .king .outline {
+    transform: none;
+    transition: opacity 120ms linear;
+  }
+}

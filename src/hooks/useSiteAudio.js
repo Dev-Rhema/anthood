@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import revSrc from '../assets/media/car-rev.mp3'
+import musicSrc from '../assets/media/music.mp3'
 
-const BG_SRC = '/bg-audio.mp3'
-const REV_SRC = '/carRevv.mp3'
-const BG_VOLUME = 0.5 // the bg track is ~7 dB louder than the rev; this evens them out
-const BG_DUCKED_VOLUME = 0.2 // bg level while the car revs, low enough to hear the engine
+const MUSIC_VOLUME = 0.5 // the music is ~7 dB louder than the rev; this evens them out
+const MUSIC_DUCKED_VOLUME = 0.2 // music level while the car revs, low enough to hear the engine
 const FADE_MS = 300
 const MUTE_KEY = 'anthood-muted'
 
@@ -15,26 +15,26 @@ const readMuted = () => {
   }
 }
 
-// Nothing plays until start() is called (the click on the garage door). After that the
-// background music loops for the whole visit. While the car is hovered the engine rev plays
-// (looping, in case the hover outlasts the clip) and the music fades down so the rev can be heard.
+// Nothing plays until start() is called (the click on the garage door). After that the music
+// loops for the whole visit. While the car is hovered the engine rev plays (looping, in case
+// the hover outlasts the clip) and the music fades down so the rev can be heard.
 export function useSiteAudio() {
-  const bg = useRef(null)
+  const music = useRef(null)
   const rev = useRef(null)
   const started = useRef(false)
   const carHovered = useRef(false)
   const fadeFrame = useRef(0)
   const [muted, setMuted] = useState(readMuted)
 
-  const fadeBgTo = useCallback((target) => {
+  const fadeMusicTo = useCallback((target) => {
     cancelAnimationFrame(fadeFrame.current)
-    const b = bg.current
-    if (!b) return
-    const from = b.volume
+    const m = music.current
+    if (!m) return
+    const from = m.volume
     const t0 = performance.now()
     const step = (now) => {
       const k = Math.min(1, (now - t0) / FADE_MS)
-      b.volume = from + (target - from) * k
+      m.volume = from + (target - from) * k
       if (k < 1) fadeFrame.current = requestAnimationFrame(step)
     }
     fadeFrame.current = requestAnimationFrame(step)
@@ -43,40 +43,76 @@ export function useSiteAudio() {
   // Make playback match the desired state. Safe to call at any time; the returned promise
   // rejects if the browser blocks playback (no user gesture yet).
   const sync = useCallback(() => {
-    const b = bg.current
+    const m = music.current
     const r = rev.current
-    if (!started.current || !b || !r) return Promise.resolve()
+    if (!started.current || !m || !r) return Promise.resolve()
     if (carHovered.current) {
-      fadeBgTo(BG_DUCKED_VOLUME)
-      return Promise.all([b.play(), r.play()])
+      fadeMusicTo(MUSIC_DUCKED_VOLUME)
+      return Promise.all([m.play(), r.play()])
     }
-    fadeBgTo(BG_VOLUME)
+    fadeMusicTo(MUSIC_VOLUME)
     r.pause()
     r.currentTime = 0
-    return b.play()
-  }, [fadeBgTo])
+    return m.play()
+  }, [fadeMusicTo])
 
   useEffect(() => {
-    const b = new Audio(BG_SRC)
-    b.loop = true
-    b.volume = BG_VOLUME
-    const r = new Audio(REV_SRC)
-    r.loop = true
-    bg.current = b
+    const create = (src, volume) => {
+      const audio = new Audio()
+      audio.preload = 'none' // don't compete with the intro for bandwidth
+      audio.src = src
+      audio.loop = true
+      audio.volume = volume
+      return audio
+    }
+    const m = create(musicSrc, MUSIC_VOLUME)
+    const r = create(revSrc, 1)
+    music.current = m
     rev.current = r
+
+    // Once the page has loaded, fetch both tracks with ordinary requests (which browsers cache
+    // permanently, unlike media-element requests) and play from the local copy. If that fails,
+    // or the visitor clicks first, the tracks simply stream from the network as normal.
+    let cancelled = false
+    const objectUrls = []
+    const prefetch = async (audio, src) => {
+      try {
+        const response = await fetch(src)
+        if (!response.ok) return
+        const url = URL.createObjectURL(await response.blob())
+        if (cancelled || started.current) return URL.revokeObjectURL(url)
+        objectUrls.push(url)
+        audio.src = url
+      } catch {
+        // keep the network source
+      }
+    }
+    const warm = async () => {
+      await Promise.all([prefetch(m, musicSrc), prefetch(r, revSrc)])
+      if (cancelled || started.current) return
+      m.preload = r.preload = 'auto'
+      m.load()
+      r.load()
+    }
+    if (document.readyState === 'complete') warm()
+    else window.addEventListener('load', warm, { once: true })
+
     sync().catch(() => {}) // only does anything if playback had already been started
 
     return () => {
+      cancelled = true
+      window.removeEventListener('load', warm)
       cancelAnimationFrame(fadeFrame.current)
-      b.pause()
+      m.pause()
       r.pause()
-      bg.current = null
+      music.current = null
       rev.current = null
+      objectUrls.forEach((url) => URL.revokeObjectURL(url))
     }
   }, [sync])
 
   useEffect(() => {
-    if (bg.current) bg.current.muted = muted
+    if (music.current) music.current.muted = muted
     if (rev.current) rev.current.muted = muted
     try {
       localStorage.setItem(MUTE_KEY, muted ? '1' : '0')
